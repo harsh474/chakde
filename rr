@@ -1,0 +1,142 @@
+// C++ Implementation of the Round Robin CPU Scheduling Algorithm
+
+#include<bits/stdc++.h>
+
+using namespace std;
+// Each process will have the following characteristics, and stored in an array
+struct process_struct {
+  int pid; 
+  int at; 
+  int bt;
+  int ct, wt, tat, rt, start_time; 
+  int bt_remaining; 
+}
+prcs[100]; 
+
+// To sort the unordered arrival times
+bool comparatorAT(struct process_struct a, struct process_struct b) {
+  int x = a.at;
+  int y = b.at;
+  return x < y;
+ 
+}
+// To sort the Process IDs
+bool comparatorPID(struct process_struct a, struct process_struct b) {
+  int x = a.pid;
+  int y = b.pid;
+  return x < y;
+}
+
+int main() {
+  int n, index; 
+  int cpu_utilization;
+
+  queue < int > q;
+  
+  bool visited[100] = {
+    false
+  }, is_first_process = true;
+  int current_time = 0;
+  int completed = 0, tq, total_idle_time = 0;
+  cout << "Enter total number of processes: ";
+  cin >> n; 
+
+  for (int i = 0; i < n; i++) {
+    cout << "\nEnter Process " << i << " Arrival Time: ";
+    cin >> prcs[i].at;
+    prcs[i].pid = i;
+  }
+  
+  for (int i = 0; i < n; i++) {
+    cout << "\nEnter Process " << i << " Burst Time: ";
+    cin >> prcs[i].bt;
+    prcs[i].bt_remaining = prcs[i].bt;
+  }
+  // Accept the time slice/quantum
+  cout << "\nEnter the time quantum: ";
+  cin >> tq;
+
+  
+  sort(prcs, prcs + n, comparatorAT);
+ 
+
+  q.push(0);
+  // Update the status 
+  visited[0] = true;
+ 
+  while (completed != n) {
+   
+    index = q.front();
+
+    q.pop();
+  
+    if (prcs[index].bt_remaining == prcs[index].bt) {
+    
+      prcs[index].start_time = max(current_time, prcs[index].at);
+      total_idle_time += (is_first_process == true) ? 0 : prcs[index].start_time - current_time;
+      current_time = prcs[index].start_time;
+      is_first_process = false;
+
+    }
+   
+    if (prcs[index].bt_remaining - tq > 0) {
+     
+      prcs[index].bt_remaining -= tq;
+    
+      current_time += tq;
+    }
+   
+    else {
+      
+      current_time += prcs[index].bt_remaining;
+      
+      prcs[index].bt_remaining = 0;
+     
+      completed++;
+   
+      prcs[index].ct = current_time;
+      prcs[index].tat = prcs[index].ct - prcs[index].at;
+      prcs[index].wt = prcs[index].tat - prcs[index].bt;
+      prcs[index].rt = prcs[index].start_time - prcs[index].at;
+    }
+
+    
+    for (int i = 1; i < n; i++) {
+      if (prcs[i].bt_remaining > 0 && prcs[i].at <= current_time && visited[i] == false) {
+        q.push(i);
+        visited[i] = true;
+      }
+    }
+
+    if (prcs[index].bt_remaining > 0)
+      q.push(index);
+
+
+    if (q.empty()) {
+      for (int i = 1; i < n; i++) {
+        if (prcs[i].bt_remaining > 0) {
+          q.push(i);
+          visited[i] = true;
+          break;
+        }
+      }
+    }
+  }  
+  sort(prcs, prcs + n, comparatorPID);
+  //Output
+  cout << "\nPNo.\tAT\tBT\tST\tCT\tTAT\tWT\tRT\n";
+  for (int i = 0; i < n; i++)
+    cout << "P[" << i << "]" << "\t" << prcs[i].at << "\t" << prcs[i].bt << "\t" << prcs[i].start_time << "\t" << prcs[i].ct << "\t" << prcs[i].tat << "\t" << prcs[i].wt << "\t" << prcs[i].rt << endl;
+  cout << endl; 
+  int total =0 ; 
+  for(int i= 0;i<n;i++){ 
+   total+=prcs[i].tat ;
+  } 
+  cout<<"total turn around time"<<total/n<<endl ;
+   total =0 ; 
+  for(int i= 0;i<n;i++){ 
+   total+=prcs[i].wt ;
+  } 
+  cout<<"total waiting time"<<total/n<<endl ;
+  return 0;
+}
